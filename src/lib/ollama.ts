@@ -3,7 +3,22 @@ export interface ChatMessage {
   content: string;
 }
 
-const OLLAMA_BASE = "http://localhost:11434";
+// Use same hostname as the page so it works both locally and remotely
+function getOllamaBase(): string {
+  const saved = localStorage.getItem("alexa-ollama-url");
+  if (saved) return saved.replace(/\/$/, "");
+  
+  const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+  return `http://${host}:11434`;
+}
+
+export function setOllamaUrl(url: string) {
+  localStorage.setItem("alexa-ollama-url", url);
+}
+
+export function getOllamaUrl(): string {
+  return getOllamaBase();
+}
 
 export async function streamChat({
   messages,
@@ -18,7 +33,8 @@ export async function streamChat({
   onDone: () => void;
   signal?: AbortSignal;
 }) {
-  const resp = await fetch(`${OLLAMA_BASE}/api/chat`, {
+  const base = getOllamaBase();
+  const resp = await fetch(`${base}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ model, messages, stream: true }),
@@ -63,7 +79,8 @@ export async function streamChat({
 
 export async function checkOllamaStatus(): Promise<boolean> {
   try {
-    const resp = await fetch(`${OLLAMA_BASE}/api/tags`, { signal: AbortSignal.timeout(3000) });
+    const base = getOllamaBase();
+    const resp = await fetch(`${base}/api/tags`, { signal: AbortSignal.timeout(3000) });
     return resp.ok;
   } catch {
     return false;
@@ -72,7 +89,8 @@ export async function checkOllamaStatus(): Promise<boolean> {
 
 export async function listModels(): Promise<string[]> {
   try {
-    const resp = await fetch(`${OLLAMA_BASE}/api/tags`);
+    const base = getOllamaBase();
+    const resp = await fetch(`${base}/api/tags`);
     const data = await resp.json();
     return (data.models || []).map((m: { name: string }) => m.name);
   } catch {

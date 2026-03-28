@@ -8,9 +8,31 @@
 
 ---
 
+## 💾 Database
+
+Alexa AI menggunakan **IndexedDB** sebagai database lokal:
+
+| Fitur | Detail |
+|-------|--------|
+| Tipe | IndexedDB (browser-based) |
+| Library | `idb` (wrapper IndexedDB) |
+| Kapasitas | Ratusan MB - GB (tergantung browser) |
+| Setup | Otomatis, tidak perlu konfigurasi |
+| Persistensi | Data tersimpan di browser pengguna |
+| Struktur | 2 object store: `conversations` & `messages` |
+
+### Cara Kerja Database
+
+- **Otomatis**: Database dibuat otomatis saat pertama kali membuka aplikasi
+- **Persistent**: Data tetap tersimpan meskipun browser ditutup
+- **Per-browser**: Setiap browser memiliki database sendiri
+- **Hapus data**: Buka DevTools → Application → IndexedDB → hapus `alexa-ai-db`
+
+---
+
 ## 🔧 Cara 1: Deploy Manual (Tanpa Docker)
 
-### 1. Install Ollama
+### 1. Install & Jalankan Ollama
 
 ```bash
 # Linux
@@ -19,34 +41,22 @@ curl -fsSL https://ollama.ai/install.sh | sh
 # macOS
 brew install ollama
 
-# Windows
-# Download dari https://ollama.ai/download
-```
-
-### 2. Jalankan Ollama & Download Model
-
-```bash
-# Jalankan Ollama server
-ollama serve &
+# Jalankan Ollama (PENTING: enable CORS untuk akses jaringan)
+OLLAMA_ORIGINS=* ollama serve &
 
 # Download model (pilih salah satu)
-ollama pull llama3      # atau: mistral, codellama, openclaw, phi3
+ollama pull llama3      # atau: mistral, codellama, phi3, gemma2, qwen2
 ```
 
-### 3. Install Dependencies & Build
+### 2. Install Dependencies & Build
 
 ```bash
-# Install dependencies
 npm install
-
-# Build untuk production
 npm run build
-
-# Preview hasil build
 npm run preview -- --port 6301
 ```
 
-### 4. Akses Aplikasi
+### 3. Akses Aplikasi
 
 Buka browser: **http://localhost:6301**
 
@@ -56,17 +66,15 @@ Buka browser: **http://localhost:6301**
 
 ### 1. Pastikan Ollama Berjalan
 
-Ollama harus berjalan di host machine (bukan di dalam container) karena memerlukan akses GPU:
-
 ```bash
-ollama serve &
-ollama pull llama3    # atau model lain: mistral, codellama, openclaw
+# PENTING: Jalankan dengan CORS untuk akses dari container
+OLLAMA_ORIGINS=* ollama serve &
+ollama pull llama3    # atau model lain
 ```
 
 ### 2. Build & Jalankan Docker
 
 ```bash
-# Build dan jalankan
 docker compose up -d
 
 # Atau build manual
@@ -89,20 +97,57 @@ chmod +x deploy.sh
 
 Script akan otomatis:
 1. ✅ Mengecek dan install Ollama
-2. ✅ Download model OpenClaw
-3. ✅ Install dependencies
-4. ✅ Build aplikasi
-5. ✅ Menjalankan di port yang diinginkan (default: 6301)
+2. ✅ Menjalankan Ollama dengan CORS enabled
+3. ✅ Memilih model AI (interaktif atau via `--model`)
+4. ✅ Setup database (IndexedDB, otomatis)
+5. ✅ Build dan deploy aplikasi
 
-### Opsi Custom
+### Opsi Lengkap
 
 ```bash
-./deploy.sh --port 8080
-./deploy.sh --model mistral
-./deploy.sh --port 8080 --model codellama
+# Start
+./deploy.sh                        # Interactive model selection
+./deploy.sh --model llama3         # Langsung pakai llama3
+./deploy.sh --port 8080            # Custom port
+./deploy.sh --docker               # Deploy via Docker
+./deploy.sh --model mistral --docker  # Docker + custom model
+
+# Stop
+./deploy.sh --stop                 # Stop server + opsi stop Ollama
+./deploy.sh --stop --docker        # Stop Docker container
+
+# Lainnya
+./deploy.sh --restart              # Restart aplikasi
+./deploy.sh --status               # Cek status semua service
+./deploy.sh --help                 # Tampilkan bantuan
 ```
 
-Jika tidak menggunakan `--model`, script akan menampilkan menu interaktif untuk memilih model.
+---
+
+## 🌐 Akses dari Jaringan Lain
+
+Jika ingin mengakses Alexa AI dari komputer/HP lain di jaringan yang sama:
+
+1. **Jalankan Ollama dengan CORS:**
+   ```bash
+   OLLAMA_ORIGINS=* ollama serve
+   ```
+
+2. **Buka firewall** untuk port `6301` (web) dan `11434` (Ollama):
+   ```bash
+   # Linux (ufw)
+   sudo ufw allow 6301
+   sudo ufw allow 11434
+
+   # Linux (firewalld)
+   sudo firewall-cmd --add-port=6301/tcp --permanent
+   sudo firewall-cmd --add-port=11434/tcp --permanent
+   sudo firewall-cmd --reload
+   ```
+
+3. **Akses** dari browser: `http://<IP-SERVER>:6301`
+
+Aplikasi otomatis mendeteksi hostname dan menghubungkan ke Ollama di server yang sama.
 
 ---
 
@@ -110,35 +155,50 @@ Jika tidak menggunakan `--model`, script akan menampilkan menu interaktif untuk 
 
 ### Mengubah Model AI
 
-Edit file `src/lib/ollama.ts` dan ubah default model:
-
-```typescript
-model = "llama3"  // Ganti dengan model lain
-```
-
-Atau pilih model langsung dari UI di header aplikasi.
+Pilih model dari dropdown di header aplikasi, atau edit default di `src/lib/ollama.ts`.
 
 ### Model yang Direkomendasikan
 
 | Model | Ukuran | Deskripsi |
 |-------|--------|-----------|
-| openclaw | ~4GB | Default, balanced |
-| llama3 | ~4GB | Meta's Llama 3 |
+| llama3 | ~4GB | Meta's Llama 3 (recommended) |
 | mistral | ~4GB | Mistral AI |
 | codellama | ~4GB | Coding specialist |
+| phi3 | ~2GB | Microsoft Phi-3 (ringan) |
+| gemma2 | ~5GB | Google Gemma 2 |
+| qwen2 | ~4GB | Alibaba Qwen 2 |
+
+### Mengubah URL Ollama
+
+Secara default, aplikasi menggunakan hostname yang sama dengan halaman web di port `11434`. Jika Ollama berjalan di server berbeda, atur via localStorage di console browser:
+
+```javascript
+localStorage.setItem("alexa-ollama-url", "http://192.168.1.100:11434");
+location.reload();
+```
 
 ---
 
 ## ❓ Troubleshooting
 
-### Ollama tidak terhubung
-- Pastikan Ollama berjalan: `ollama serve`
-- Cek status: `curl http://localhost:11434/api/tags`
+### Status "Offline"
+
+1. Pastikan Ollama berjalan: `curl http://localhost:11434/api/tags`
+2. Jika akses remote, pastikan CORS diaktifkan: `OLLAMA_ORIGINS=* ollama serve`
+3. Pastikan firewall membuka port `11434`
+
+### Tidak bisa kirim pesan
+- Pastikan status "Online" di header
+- Pastikan model sudah dipilih dan ada di Ollama: `ollama list`
 
 ### Model tidak ditemukan
-- Download model: `ollama pull openclaw`
+- Download model: `ollama pull llama3`
 - List model: `ollama list`
 
 ### Port sudah digunakan
 - Gunakan port lain: `./deploy.sh --port 8080`
-- Atau kill proses di port tersebut: `lsof -ti:6301 | xargs kill`
+- Atau kill proses: `lsof -ti:6301 | xargs kill`
+
+### Database (IndexedDB)
+- Buka DevTools → Application → IndexedDB → `alexa-ai-db`
+- Untuk reset: hapus database di DevTools atau jalankan `chatDB.clearAll()` di console
