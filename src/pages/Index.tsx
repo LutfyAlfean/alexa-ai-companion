@@ -177,11 +177,50 @@ const Index = () => {
             <img src={logoImg} alt="Alexa AI" className="w-6 h-6" />
             <span className="font-display font-semibold text-sm gradient-text">Alexa AI</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${ollamaOnline ? "bg-green-500" : ollamaOnline === false ? "bg-destructive" : "bg-muted-foreground"}`} />
-            <span className="text-xs text-muted-foreground">
-              {ollamaOnline ? "Online" : ollamaOnline === false ? "Offline" : "Checking..."}
-            </span>
+          <div className="flex items-center gap-3">
+            {/* Model Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setModelMenuOpen(!modelMenuOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-muted/50 border border-border/50 hover:border-primary/30 transition-all text-muted-foreground hover:text-foreground"
+              >
+                <span className="max-w-[120px] truncate">{selectedModel}</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {modelMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-border/50 bg-card/95 backdrop-blur-xl shadow-lg z-50 py-1 max-h-64 overflow-y-auto">
+                  {availableModels.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-muted-foreground">
+                      {ollamaOnline ? "Tidak ada model. Jalankan: ollama pull llama3" : "Ollama offline"}
+                    </div>
+                  ) : (
+                    availableModels.map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => {
+                          setSelectedModel(m);
+                          localStorage.setItem("alexa-model", m);
+                          setModelMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs transition-all ${
+                          m === selectedModel
+                            ? "bg-primary/15 text-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${ollamaOnline ? "bg-green-500" : ollamaOnline === false ? "bg-destructive" : "bg-muted-foreground"}`} />
+              <span className="text-xs text-muted-foreground">
+                {ollamaOnline ? "Online" : ollamaOnline === false ? "Offline" : "Checking..."}
+              </span>
+            </div>
           </div>
         </div>
 
