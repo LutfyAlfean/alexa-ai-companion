@@ -10,6 +10,7 @@ interface Props {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  currentModel: string;
 }
 
 const ChatSidebar = ({ conversations, activeId, onSelect, onNew, onDelete }: Props) => {
