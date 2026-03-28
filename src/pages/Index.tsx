@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X, Sparkles, ChevronDown, RefreshCw } from "lucide-react";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import { chatDB, type Conversation, type StoredMessage } from "@/lib/chatdb";
-import { streamChat, checkOllamaStatus, type ChatMessage as OllamaMsg } from "@/lib/ollama";
+import { streamChat, checkOllamaStatus, listModels, type ChatMessage as OllamaMsg } from "@/lib/ollama";
 import logoImg from "/logo.png";
 
 const SYSTEM_PROMPT: OllamaMsg = {
