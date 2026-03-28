@@ -13,7 +13,7 @@ interface Props {
   currentModel: string;
 }
 
-const ChatSidebar = ({ conversations, activeId, onSelect, onNew, onDelete }: Props) => {
+const ChatSidebar = ({ conversations, activeId, onSelect, onNew, onDelete, currentModel }: Props) => {
   return (
     <div className="w-72 h-full flex flex-col bg-sidebar border-r border-sidebar-border">
       {/* Header */}

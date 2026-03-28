@@ -7,7 +7,7 @@ const OLLAMA_BASE = "http://localhost:11434";
 
 export async function streamChat({
   messages,
-  model = "openclaw",
+  model = "llama3",
   onDelta,
   onDone,
   signal,
