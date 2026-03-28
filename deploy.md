@@ -29,8 +29,8 @@ brew install ollama
 # Jalankan Ollama server
 ollama serve &
 
-# Download model OpenClaw
-ollama pull openclaw
+# Download model (pilih salah satu)
+ollama pull llama3      # atau: mistral, codellama, openclaw, phi3
 ```
 
 ### 3. Install Dependencies & Build
@@ -60,7 +60,7 @@ Ollama harus berjalan di host machine (bukan di dalam container) karena memerluk
 
 ```bash
 ollama serve &
-ollama pull openclaw
+ollama pull llama3    # atau model lain: mistral, codellama, openclaw
 ```
 
 ### 2. Build & Jalankan Docker
@@ -94,11 +94,15 @@ Script akan otomatis:
 4. ✅ Build aplikasi
 5. ✅ Menjalankan di port yang diinginkan (default: 6301)
 
-### Opsi Custom Port
+### Opsi Custom
 
 ```bash
 ./deploy.sh --port 8080
+./deploy.sh --model mistral
+./deploy.sh --port 8080 --model codellama
 ```
+
+Jika tidak menggunakan `--model`, script akan menampilkan menu interaktif untuk memilih model.
 
 ---
 
@@ -109,8 +113,10 @@ Script akan otomatis:
 Edit file `src/lib/ollama.ts` dan ubah default model:
 
 ```typescript
-model = "openclaw"  // Ganti dengan model lain
+model = "llama3"  // Ganti dengan model lain
 ```
+
+Atau pilih model langsung dari UI di header aplikasi.
 
 ### Model yang Direkomendasikan
 

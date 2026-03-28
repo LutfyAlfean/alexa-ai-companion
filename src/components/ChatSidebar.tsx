@@ -10,9 +10,10 @@ interface Props {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  currentModel: string;
 }
 
-const ChatSidebar = ({ conversations, activeId, onSelect, onNew, onDelete }: Props) => {
+const ChatSidebar = ({ conversations, activeId, onSelect, onNew, onDelete, currentModel }: Props) => {
   return (
     <div className="w-72 h-full flex flex-col bg-sidebar border-r border-sidebar-border">
       {/* Header */}
@@ -70,7 +71,7 @@ const ChatSidebar = ({ conversations, activeId, onSelect, onNew, onDelete }: Pro
       <div className="p-3 border-t border-sidebar-border">
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse-glow" />
-          Ollama · OpenClaw
+          Ollama · {currentModel || "No model"}
         </div>
       </div>
     </div>

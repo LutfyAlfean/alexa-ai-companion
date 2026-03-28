@@ -7,7 +7,7 @@ set -e
 # ============================================
 
 PORT=6301
-MODEL="openclaw"
+MODEL=""
 USE_DOCKER=false
 
 # Parse arguments
@@ -85,7 +85,38 @@ fi
 
 # ---- Step 3: Pull Model ----
 echo ""
-echo "🤖 Step 3: Downloading model $MODEL..."
+if [ -z "$MODEL" ]; then
+  echo "🤖 Step 3: Pilih model AI..."
+  echo ""
+  echo "  Model yang tersedia di Ollama:"
+  EXISTING=$(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}')
+  if [ -n "$EXISTING" ]; then
+    echo "$EXISTING" | while read -r m; do echo "    ✅ $m"; done
+  else
+    echo "    (belum ada model terinstall)"
+  fi
+  echo ""
+  echo "  Model populer:"
+  echo "    1) llama3       - Meta Llama 3 (recommended)"
+  echo "    2) mistral      - Mistral AI"
+  echo "    3) codellama    - Coding specialist"
+  echo "    4) openclaw     - OpenClaw"
+  echo "    5) phi3         - Microsoft Phi-3"
+  echo ""
+  read -p "  Masukkan nama model atau nomor (1-5): " choice
+  case "$choice" in
+    1) MODEL="llama3" ;;
+    2) MODEL="mistral" ;;
+    3) MODEL="codellama" ;;
+    4) MODEL="openclaw" ;;
+    5) MODEL="phi3" ;;
+    "") MODEL="llama3"; echo "  Default: llama3" ;;
+    *) MODEL="$choice" ;;
+  esac
+  echo ""
+fi
+
+echo "🤖 Model dipilih: $MODEL"
 if ollama list | grep -q "$MODEL"; then
   log_ok "Model $MODEL sudah ada"
 else
