@@ -7,7 +7,7 @@ set -e
 # ============================================
 
 PORT=6301
-MODEL="openclaw"
+MODEL=""
 USE_DOCKER=false
 
 # Parse arguments
