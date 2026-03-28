@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Menu, X, Sparkles, ChevronDown, RefreshCw } from "lucide-react";
+import { Menu, X, Sparkles, ChevronDown } from "lucide-react";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
@@ -37,15 +37,20 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const refreshConversations = useCallback(async () => {
+    const convs = await chatDB.listConversations();
+    setConversations(convs);
+  }, []);
+
   // Load conversations
   useEffect(() => {
-    setConversations(chatDB.listConversations());
-  }, []);
+    refreshConversations();
+  }, [refreshConversations]);
 
   // Load messages when active conversation changes
   useEffect(() => {
     if (activeConvId) {
-      setMessages(chatDB.getConversationMessages(activeConvId));
+      chatDB.getConversationMessages(activeConvId).then(setMessages);
     } else {
       setMessages([]);
     }
@@ -58,8 +63,6 @@ const Index = () => {
     }
   }, [messages]);
 
-  const refreshConversations = () => setConversations(chatDB.listConversations());
-
   const handleNewChat = useCallback(() => {
     setActiveConvId(null);
     setMessages([]);
@@ -69,14 +72,14 @@ const Index = () => {
     setActiveConvId(id);
   }, []);
 
-  const handleDeleteConv = useCallback((id: string) => {
-    chatDB.deleteConversation(id);
+  const handleDeleteConv = useCallback(async (id: string) => {
+    await chatDB.deleteConversation(id);
     if (activeConvId === id) {
       setActiveConvId(null);
       setMessages([]);
     }
-    refreshConversations();
-  }, [activeConvId]);
+    await refreshConversations();
+  }, [activeConvId, refreshConversations]);
 
   const handleSend = useCallback(async (text: string) => {
     let convId = activeConvId;
@@ -84,18 +87,18 @@ const Index = () => {
     // Create conversation if needed
     if (!convId) {
       const title = text.length > 40 ? text.slice(0, 40) + "..." : text;
-      const conv = chatDB.createConversation(title);
+      const conv = await chatDB.createConversation(title);
       convId = conv.id;
       setActiveConvId(convId);
-      refreshConversations();
+      await refreshConversations();
     }
 
     // Save user message
-    const userMsg = chatDB.addMessage(convId, "user", text);
+    const userMsg = await chatDB.addMessage(convId, "user", text);
     setMessages(prev => [...prev, userMsg]);
 
     // Create assistant placeholder
-    const assistantMsg = chatDB.addMessage(convId, "assistant", "");
+    const assistantMsg = await chatDB.addMessage(convId, "assistant", "");
     setMessages(prev => [...prev, assistantMsg]);
 
     setIsStreaming(true);
@@ -104,7 +107,7 @@ const Index = () => {
     abortRef.current = controller;
 
     // Build context
-    const allMsgs = chatDB.getConversationMessages(convId);
+    const allMsgs = await chatDB.getConversationMessages(convId);
     const ollamaMsgs: OllamaMsg[] = [
       SYSTEM_PROMPT,
       ...allMsgs.filter(m => m.content).map(m => ({
@@ -123,9 +126,9 @@ const Index = () => {
             prev.map(m => m.id === assistantMsg.id ? { ...m, content: fullResponse } : m)
           );
         },
-        onDone: () => {
-          chatDB.updateMessage(assistantMsg.id, fullResponse);
-          refreshConversations();
+        onDone: async () => {
+          await chatDB.updateMessage(assistantMsg.id, fullResponse);
+          await refreshConversations();
           setIsStreaming(false);
         },
         signal: controller.signal,
@@ -137,10 +140,10 @@ const Index = () => {
       setMessages(prev =>
         prev.map(m => m.id === assistantMsg.id ? { ...m, content: errorContent } : m)
       );
-      chatDB.updateMessage(assistantMsg.id, errorContent);
+      await chatDB.updateMessage(assistantMsg.id, errorContent);
       setIsStreaming(false);
     }
-  }, [activeConvId, selectedModel]);
+  }, [activeConvId, selectedModel, refreshConversations]);
 
   return (
     <div className="flex h-screen chat-gradient overflow-hidden">
