@@ -116,6 +116,7 @@ const Index = () => {
     try {
       await streamChat({
         messages: ollamaMsgs,
+        model: selectedModel,
         onDelta: (chunk) => {
           fullResponse += chunk;
           setMessages(prev =>
