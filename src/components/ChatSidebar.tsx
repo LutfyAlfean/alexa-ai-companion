@@ -70,7 +70,7 @@ const ChatSidebar = ({ conversations, activeId, onSelect, onNew, onDelete }: Pro
       <div className="p-3 border-t border-sidebar-border">
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse-glow" />
-          Ollama · OpenClaw
+          Ollama · {currentModel || "No model"}
         </div>
       </div>
     </div>
