@@ -133,7 +133,7 @@ const Index = () => {
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
       const errorMsg = err instanceof Error ? err.message : "Gagal menghubungi Ollama";
-      const errorContent = `⚠️ **Error**: ${errorMsg}\n\nPastikan Ollama berjalan di \`localhost:11434\` dengan model \`openclaw\`.`;
+      const errorContent = `⚠️ **Error**: ${errorMsg}\n\nPastikan Ollama berjalan di \`localhost:11434\` dengan model \`${selectedModel}\`.`;
       setMessages(prev =>
         prev.map(m => m.id === assistantMsg.id ? { ...m, content: errorContent } : m)
       );
