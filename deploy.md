@@ -29,8 +29,8 @@ brew install ollama
 # Jalankan Ollama server
 ollama serve &
 
-# Download model OpenClaw
-ollama pull openclaw
+# Download model (pilih salah satu)
+ollama pull llama3      # atau: mistral, codellama, openclaw, phi3
 ```
 
 ### 3. Install Dependencies & Build
