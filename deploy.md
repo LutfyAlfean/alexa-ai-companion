@@ -94,11 +94,15 @@ Script akan otomatis:
 4. ✅ Build aplikasi
 5. ✅ Menjalankan di port yang diinginkan (default: 6301)
 
-### Opsi Custom Port
+### Opsi Custom
 
 ```bash
 ./deploy.sh --port 8080
+./deploy.sh --model mistral
+./deploy.sh --port 8080 --model codellama
 ```
+
+Jika tidak menggunakan `--model`, script akan menampilkan menu interaktif untuk memilih model.
 
 ---
 
