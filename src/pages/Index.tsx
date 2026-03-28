@@ -26,10 +26,14 @@ const Index = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Check Ollama status
+  // Check Ollama status & load models
   useEffect(() => {
     checkOllamaStatus().then(setOllamaOnline);
-    const interval = setInterval(() => checkOllamaStatus().then(setOllamaOnline), 10000);
+    listModels().then(setAvailableModels);
+    const interval = setInterval(() => {
+      checkOllamaStatus().then(setOllamaOnline);
+      listModels().then(setAvailableModels);
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
