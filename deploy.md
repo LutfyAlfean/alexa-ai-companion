@@ -113,8 +113,10 @@ Jika tidak menggunakan `--model`, script akan menampilkan menu interaktif untuk 
 Edit file `src/lib/ollama.ts` dan ubah default model:
 
 ```typescript
-model = "openclaw"  // Ganti dengan model lain
+model = "llama3"  // Ganti dengan model lain
 ```
+
+Atau pilih model langsung dari UI di header aplikasi.
 
 ### Model yang Direkomendasikan
 
