@@ -140,7 +140,7 @@ const Index = () => {
       chatDB.updateMessage(assistantMsg.id, errorContent);
       setIsStreaming(false);
     }
-  }, [activeConvId]);
+  }, [activeConvId, selectedModel]);
 
   return (
     <div className="flex h-screen chat-gradient overflow-hidden">
