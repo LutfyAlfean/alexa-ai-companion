@@ -160,6 +160,7 @@ const Index = () => {
           onSelect={handleSelectConv}
           onNew={handleNewChat}
           onDelete={handleDeleteConv}
+          currentModel={selectedModel}
         />
       </div>
 
