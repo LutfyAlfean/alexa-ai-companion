@@ -60,7 +60,7 @@ Ollama harus berjalan di host machine (bukan di dalam container) karena memerluk
 
 ```bash
 ollama serve &
-ollama pull openclaw
+ollama pull llama3    # atau model lain: mistral, codellama, openclaw
 ```
 
 ### 2. Build & Jalankan Docker
