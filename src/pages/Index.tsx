@@ -20,6 +20,9 @@ const Index = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [ollamaOnline, setOllamaOnline] = useState<boolean | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem("alexa-model") || "llama3");
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
