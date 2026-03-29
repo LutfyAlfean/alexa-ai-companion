@@ -1,5 +1,8 @@
 import { openDB, type IDBPDatabase } from "idb";
 
+export const CHAT_DB_NAME = "alexa-ai-db";
+export const CHAT_DB_ENGINE = "IndexedDB";
+
 export interface Conversation {
   id: string;
   title: string;
@@ -32,7 +35,7 @@ let dbPromise: Promise<IDBPDatabase<AlexaDB>> | null = null;
 
 function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<AlexaDB>("alexa-ai-db", 1, {
+    dbPromise = openDB<AlexaDB>(CHAT_DB_NAME, 1, {
       upgrade(db) {
         const convStore = db.createObjectStore("conversations", { keyPath: "id" });
         convStore.createIndex("by-updated", "updatedAt");

@@ -4,7 +4,7 @@ import { Menu, X, Sparkles, ChevronDown } from "lucide-react";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
-import { chatDB, type Conversation, type StoredMessage } from "@/lib/chatdb";
+import { chatDB, CHAT_DB_ENGINE, CHAT_DB_NAME, type Conversation, type StoredMessage } from "@/lib/chatdb";
 import { streamChat, checkOllamaStatus, listModels, type ChatMessage as OllamaMsg } from "@/lib/ollama";
 import logoImg from "/logo.png";
 
@@ -181,6 +181,10 @@ const Index = () => {
             <span className="font-display font-semibold text-sm gradient-text">Alexa AI</span>
           </div>
           <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
+              <span>DB Lokal</span>
+              <span className="text-foreground">{CHAT_DB_ENGINE}</span>
+            </div>
             {/* Model Selector */}
             <div className="relative">
               <button
@@ -250,7 +254,7 @@ const Index = () => {
                   Halo! Saya Alexa AI
                 </h2>
                 <p className="text-muted-foreground text-sm max-w-md">
-                  Asisten AI lokal Anda. Tanyakan apa saja — coding, menulis, analisis, dan lainnya.
+                  Asisten AI lokal Anda. Tanyakan apa saja — coding, menulis, analisis, dan lainnya. Semua chat tersimpan lokal di {CHAT_DB_ENGINE} <span className="whitespace-nowrap">({CHAT_DB_NAME})</span>.
                 </p>
               </motion.div>
               <motion.div

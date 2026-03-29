@@ -10,6 +10,8 @@ PORT=6301
 MODEL=""
 USE_DOCKER=false
 ACTION="start"
+DB_ENGINE="IndexedDB"
+DB_NAME="alexa-ai-db"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -128,8 +130,9 @@ if [ "$ACTION" = "status" ]; then
 
   # Database info
   echo ""
-  log_info "Database: IndexedDB (browser-based, otomatis tersedia)"
-  log_info "Data tersimpan di browser pengguna, tidak perlu setup tambahan"
+  log_info "Database: $DB_ENGINE (browser-based, otomatis tersedia)"
+  log_info "Nama database browser: $DB_NAME"
+  log_info "Data chat tersimpan di browser pengguna, tidak perlu setup tambahan"
 
   echo ""
   exit 0
@@ -245,9 +248,11 @@ fi
 echo ""
 echo "💾 Step 4: Database..."
 log_ok "Database: IndexedDB (browser-based)"
+log_info "Nama database lokal: $DB_NAME"
 log_info "Data chat tersimpan otomatis di browser pengguna"
 log_info "Kapasitas: Ratusan MB - GB (tergantung browser)"
 log_info "Tidak perlu setup database tambahan"
+log_info "localStorage hanya dipakai untuk preferensi ringan seperti model aktif"
 
 # ---- Step 5: Deploy ----
 echo ""
@@ -294,7 +299,7 @@ echo "🐉 ============================="
 echo "   Alexa AI berhasil di-deploy!"
 echo "   🌐 http://localhost:$PORT"
 echo "   🤖 Model: $MODEL"
-echo "   💾 Database: IndexedDB (otomatis)"
+echo "   💾 Database: $DB_ENGINE ($DB_NAME)"
 echo "==============================="
 echo ""
 echo "📌 Perintah berguna:"
