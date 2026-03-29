@@ -5,7 +5,7 @@ import ChatSidebar from "@/components/ChatSidebar";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import { chatDB, CHAT_DB_ENGINE, CHAT_DB_NAME, type Conversation, type StoredMessage } from "@/lib/chatdb";
-import { streamChat, checkOllamaStatus, listModels, type ChatMessage as OllamaMsg } from "@/lib/ollama";
+import { streamChat, checkOllamaStatus, getOllamaUrl, listModels, type ChatMessage as OllamaMsg } from "@/lib/ollama";
 import logoImg from "/logo.png";
 
 const SYSTEM_PROMPT: OllamaMsg = {
@@ -25,6 +25,12 @@ const Index = () => {
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const stopStreaming = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setIsStreaming(false);
+  }, []);
 
   // Check Ollama status & load models
   useEffect(() => {
@@ -64,59 +70,65 @@ const Index = () => {
   }, [messages]);
 
   const handleNewChat = useCallback(() => {
+    stopStreaming();
     setActiveConvId(null);
     setMessages([]);
-  }, []);
+  }, [stopStreaming]);
 
   const handleSelectConv = useCallback((id: string) => {
+    stopStreaming();
     setActiveConvId(id);
-  }, []);
+  }, [stopStreaming]);
 
   const handleDeleteConv = useCallback(async (id: string) => {
+    if (activeConvId === id) {
+      stopStreaming();
+    }
     await chatDB.deleteConversation(id);
     if (activeConvId === id) {
       setActiveConvId(null);
       setMessages([]);
     }
     await refreshConversations();
-  }, [activeConvId, refreshConversations]);
+  }, [activeConvId, refreshConversations, stopStreaming]);
 
   const handleSend = useCallback(async (text: string) => {
+    if (isStreaming) return;
+
     let convId = activeConvId;
-
-    // Create conversation if needed
-    if (!convId) {
-      const title = text.length > 40 ? text.slice(0, 40) + "..." : text;
-      const conv = await chatDB.createConversation(title);
-      convId = conv.id;
-      setActiveConvId(convId);
-      await refreshConversations();
-    }
-
-    // Save user message
-    const userMsg = await chatDB.addMessage(convId, "user", text);
-    setMessages(prev => [...prev, userMsg]);
-
-    // Create assistant placeholder
-    const assistantMsg = await chatDB.addMessage(convId, "assistant", "");
-    setMessages(prev => [...prev, assistantMsg]);
-
-    setIsStreaming(true);
-    let fullResponse = "";
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    // Build context
-    const allMsgs = await chatDB.getConversationMessages(convId);
-    const ollamaMsgs: OllamaMsg[] = [
-      SYSTEM_PROMPT,
-      ...allMsgs.filter(m => m.content).map(m => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
-    ];
+    let assistantMsg: StoredMessage | null = null;
 
     try {
+      if (!convId) {
+        const title = text.length > 40 ? text.slice(0, 40) + "..." : text;
+        const conv = await chatDB.createConversation(title);
+        convId = conv.id;
+        setActiveConvId(convId);
+      }
+
+      await refreshConversations();
+
+      const userMsg = await chatDB.addMessage(convId, "user", text);
+      setMessages(prev => [...prev, userMsg]);
+
+      assistantMsg = await chatDB.addMessage(convId, "assistant", "");
+      setMessages(prev => [...prev, assistantMsg]);
+      await refreshConversations();
+
+      setIsStreaming(true);
+      let fullResponse = "";
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const allMsgs = await chatDB.getConversationMessages(convId);
+      const ollamaMsgs: OllamaMsg[] = [
+        SYSTEM_PROMPT,
+        ...allMsgs.filter(m => m.content).map(m => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+      ];
+
       await streamChat({
         messages: ollamaMsgs,
         model: selectedModel,
@@ -127,23 +139,31 @@ const Index = () => {
           );
         },
         onDone: async () => {
+          if (!assistantMsg) return;
           await chatDB.updateMessage(assistantMsg.id, fullResponse);
           await refreshConversations();
+          abortRef.current = null;
           setIsStreaming(false);
         },
         signal: controller.signal,
       });
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
+
       const errorMsg = err instanceof Error ? err.message : "Gagal menghubungi Ollama";
-      const errorContent = `⚠️ **Error**: ${errorMsg}\n\nPastikan Ollama berjalan di \`localhost:11434\` dengan model \`${selectedModel}\`.`;
-      setMessages(prev =>
-        prev.map(m => m.id === assistantMsg.id ? { ...m, content: errorContent } : m)
-      );
-      await chatDB.updateMessage(assistantMsg.id, errorContent);
+      const errorContent = `⚠️ **Error**: ${errorMsg}\n\nPastikan Ollama aktif, model \`${selectedModel}\` sudah terinstall, dan web proxy mengarah ke \`${getOllamaUrl()}\`.`;
+
+      if (assistantMsg) {
+        setMessages(prev =>
+          prev.map(m => m.id === assistantMsg?.id ? { ...m, content: errorContent } : m)
+        );
+        await chatDB.updateMessage(assistantMsg.id, errorContent);
+      }
+
+      abortRef.current = null;
       setIsStreaming(false);
     }
-  }, [activeConvId, selectedModel, refreshConversations]);
+  }, [activeConvId, isStreaming, selectedModel, refreshConversations]);
 
   return (
     <div className="flex h-screen chat-gradient overflow-hidden">
@@ -224,6 +244,7 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${ollamaOnline ? "bg-green-500" : ollamaOnline === false ? "bg-destructive" : "bg-muted-foreground"}`} />
+              <div className={`w-2 h-2 rounded-full ${ollamaOnline ? "bg-primary" : ollamaOnline === false ? "bg-destructive" : "bg-muted-foreground"}`} />
               <span className="text-xs text-muted-foreground">
                 {ollamaOnline ? "Online" : ollamaOnline === false ? "Offline" : "Checking..."}
               </span>
@@ -297,7 +318,7 @@ const Index = () => {
 
         {/* Input */}
         <div className="max-w-3xl mx-auto w-full">
-          <ChatInput onSend={handleSend} disabled={isStreaming} />
+          <ChatInput onSend={handleSend} sending={isStreaming} />
         </div>
       </div>
     </div>

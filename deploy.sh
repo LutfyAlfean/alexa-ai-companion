@@ -133,6 +133,7 @@ if [ "$ACTION" = "status" ]; then
   log_info "Database: $DB_ENGINE (browser-based, otomatis tersedia)"
   log_info "Nama database browser: $DB_NAME"
   log_info "Data chat tersimpan di browser pengguna, tidak perlu setup tambahan"
+  log_info "Koneksi Ollama lewat reverse proxy /api"
 
   echo ""
   exit 0
@@ -253,6 +254,7 @@ log_info "Data chat tersimpan otomatis di browser pengguna"
 log_info "Kapasitas: Ratusan MB - GB (tergantung browser)"
 log_info "Tidak perlu setup database tambahan"
 log_info "localStorage hanya dipakai untuk preferensi ringan seperti model aktif"
+log_info "Aplikasi mengakses Ollama lewat /api agar tidak kena blokir browser"
 
 # ---- Step 5: Deploy ----
 echo ""
@@ -287,9 +289,9 @@ else
   echo "  Building application..."
   npm run build
 
-  # Serve
-  echo "  Starting server..."
-  npx serve -s dist -l "$PORT" &
+  # Serve with Vite preview proxy
+  echo "  Starting preview server with Ollama proxy..."
+  OLLAMA_PROXY_TARGET="http://127.0.0.1:11434" npm run preview -- --host 0.0.0.0 --port "$PORT" &
   
   log_ok "Aplikasi berjalan"
 fi
@@ -300,6 +302,7 @@ echo "   Alexa AI berhasil di-deploy!"
 echo "   🌐 http://localhost:$PORT"
 echo "   🤖 Model: $MODEL"
 echo "   💾 Database: $DB_ENGINE ($DB_NAME)"
+echo "   🔌 Ollama Proxy: /api -> http://127.0.0.1:11434"
 echo "==============================="
 echo ""
 echo "📌 Perintah berguna:"

@@ -20,10 +20,14 @@ RUN echo 'server { \
     \
     location /api/ { \
         proxy_pass http://host.docker.internal:11434/api/; \
+        proxy_http_version 1.1; \
+        proxy_set_header Connection ""; \
         proxy_set_header Host $host; \
         proxy_set_header X-Real-IP $remote_addr; \
         proxy_buffering off; \
         proxy_cache off; \
+        proxy_read_timeout 3600; \
+        proxy_send_timeout 3600; \
         chunked_transfer_encoding on; \
     } \
 }' > /etc/nginx/conf.d/default.conf

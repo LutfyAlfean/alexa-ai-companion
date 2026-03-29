@@ -30,6 +30,18 @@ Alexa AI menggunakan **IndexedDB** sebagai database lokal:
 - **Bukan localStorage**: Chat utama disimpan di IndexedDB, localStorage hanya untuk preferensi ringan
 - **Hapus data**: Buka DevTools → Application → IndexedDB → hapus `alexa-ai-db`
 
+### Catatan Tentang MySQL
+
+Alexa AI saat ini adalah aplikasi **frontend lokal**. Karena itu browser **tidak bisa terhubung langsung ke MySQL** tanpa backend/API tambahan.
+
+Supaya aplikasi benar-benar bisa dipakai lokal, implementasi yang aktif dipakai adalah:
+
+- **Chat database:** IndexedDB (`alexa-ai-db`)
+- **AI runtime:** Ollama lokal
+- **Koneksi AI:** reverse proxy `/api`
+
+Ini adalah arsitektur yang paling stabil untuk mode lokal penuh.
+
 ---
 
 ## 🔧 Cara 1: Deploy Manual (Tanpa Docker)
@@ -55,7 +67,7 @@ ollama pull llama3      # atau: mistral, codellama, phi3, gemma2, qwen2
 ```bash
 npm install
 npm run build
-npm run preview -- --port 6301
+OLLAMA_PROXY_TARGET=http://127.0.0.1:11434 npm run preview -- --host 0.0.0.0 --port 6301
 ```
 
 ### 3. Akses Aplikasi
@@ -151,6 +163,8 @@ Jika ingin mengakses Alexa AI dari komputer/HP lain di jaringan yang sama:
 
 Aplikasi otomatis mendeteksi hostname dan menghubungkan ke Ollama di server yang sama.
 
+Namun pada versi terbaru, koneksi default web app memakai **proxy `/api`**, sehingga browser tidak lagi mengakses port `11434` secara langsung.
+
 ---
 
 ## 🔧 Konfigurasi
@@ -172,10 +186,17 @@ Pilih model dari dropdown di header aplikasi, atau edit default di `src/lib/olla
 
 ### Mengubah URL Ollama
 
-Secara default, aplikasi menggunakan hostname yang sama dengan halaman web di port `11434`. Jika Ollama berjalan di server berbeda, atur via localStorage di console browser:
+Secara default, aplikasi menggunakan **proxy `/api`**. Jika Ollama berjalan di server berbeda dan Anda ingin override manual, atur via localStorage di console browser:
 
 ```javascript
 localStorage.setItem("alexa-ollama-url", "http://192.168.1.100:11434");
+location.reload();
+```
+
+Untuk kembali ke mode default proxy:
+
+```javascript
+localStorage.removeItem("alexa-ollama-url");
 location.reload();
 ```
 
@@ -188,10 +209,14 @@ location.reload();
 1. Pastikan Ollama berjalan: `curl http://localhost:11434/api/tags`
 2. Jika akses remote, pastikan CORS diaktifkan: `OLLAMA_ORIGINS=* ollama serve`
 3. Pastikan firewall membuka port `11434`
+4. Jika deploy manual, jalankan web dengan `vite preview`, bukan static server biasa tanpa proxy
+5. Jika deploy Docker, pastikan container bisa mengakses `host.docker.internal:11434`
 
 ### Tidak bisa kirim pesan
 - Pastikan status "Online" di header
 - Pastikan model sudah dipilih dan ada di Ollama: `ollama list`
+- Jika input terasa terkunci, tekan **Chat Baru** atau tunggu request timeout selesai
+- Versi terbaru sudah mengizinkan tetap mengetik saat request ke Ollama sedang berlangsung
 
 ### Model tidak ditemukan
 - Download model: `ollama pull llama3`
@@ -205,4 +230,5 @@ location.reload();
 - Buka DevTools → Application → IndexedDB → `alexa-ai-db`
 - Store yang dipakai: `conversations` dan `messages`
 - Chat tidak disimpan di localStorage
+- localStorage hanya dipakai untuk model aktif dan override URL Ollama
 - Untuk reset: hapus database di DevTools atau jalankan `chatDB.clearAll()` di console
