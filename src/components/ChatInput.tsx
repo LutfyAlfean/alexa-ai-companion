@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 interface Props {
   onSend: (message: string) => void;
   disabled?: boolean;
+  sending?: boolean;
 }
 
-const ChatInput = ({ onSend, disabled }: Props) => {
+const ChatInput = ({ onSend, disabled = false, sending = false }: Props) => {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -20,7 +21,7 @@ const ChatInput = ({ onSend, disabled }: Props) => {
 
   const handleSubmit = () => {
     const trimmed = input.trim();
-    if (!trimmed || disabled) return;
+    if (!trimmed || disabled || sending) return;
     onSend(trimmed);
     setInput("");
   };
@@ -45,7 +46,7 @@ const ChatInput = ({ onSend, disabled }: Props) => {
         />
         <Button
           onClick={handleSubmit}
-          disabled={!input.trim() || disabled}
+          disabled={!input.trim() || disabled || sending}
           size="icon"
           variant="ghost"
           className="h-9 w-9 rounded-lg bg-primary/20 hover:bg-primary/40 text-primary transition-all"
@@ -54,7 +55,7 @@ const ChatInput = ({ onSend, disabled }: Props) => {
         </Button>
       </div>
       <p className="text-[10px] text-muted-foreground text-center mt-2">
-        Alexa AI · Powered by Ollama & OpenClaw
+        Alexa AI · {sending ? "Menghubungi Ollama..." : "Powered by Ollama"}
       </p>
     </div>
   );
