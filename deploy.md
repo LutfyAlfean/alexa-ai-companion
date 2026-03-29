@@ -15,6 +15,7 @@ Alexa AI menggunakan **IndexedDB** sebagai database lokal:
 | Fitur | Detail |
 |-------|--------|
 | Tipe | IndexedDB (browser-based) |
+| Nama DB | `alexa-ai-db` |
 | Library | `idb` (wrapper IndexedDB) |
 | Kapasitas | Ratusan MB - GB (tergantung browser) |
 | Setup | Otomatis, tidak perlu konfigurasi |
@@ -26,6 +27,7 @@ Alexa AI menggunakan **IndexedDB** sebagai database lokal:
 - **Otomatis**: Database dibuat otomatis saat pertama kali membuka aplikasi
 - **Persistent**: Data tetap tersimpan meskipun browser ditutup
 - **Per-browser**: Setiap browser memiliki database sendiri
+- **Bukan localStorage**: Chat utama disimpan di IndexedDB, localStorage hanya untuk preferensi ringan
 - **Hapus data**: Buka DevTools → Application → IndexedDB → hapus `alexa-ai-db`
 
 ---
@@ -201,4 +203,6 @@ location.reload();
 
 ### Database (IndexedDB)
 - Buka DevTools → Application → IndexedDB → `alexa-ai-db`
+- Store yang dipakai: `conversations` dan `messages`
+- Chat tidak disimpan di localStorage
 - Untuk reset: hapus database di DevTools atau jalankan `chatDB.clearAll()` di console
