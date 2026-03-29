@@ -186,7 +186,7 @@ echo "🚀 Step 2: Starting Ollama..."
 if curl -sf http://localhost:11434/api/tags > /dev/null 2>&1; then
   log_ok "Ollama sudah berjalan"
 else
-  OLLAMA_ORIGINS="*" ollama serve &> /dev/null &
+  OLLAMA_HOST="0.0.0.0" OLLAMA_ORIGINS="*" ollama serve &> /dev/null &
   sleep 3
   if curl -sf http://localhost:11434/api/tags > /dev/null 2>&1; then
     log_ok "Ollama berhasil dijalankan (CORS enabled)"

@@ -18,6 +18,7 @@ function getOllamaBase(): string {
     return DEFAULT_DIRECT_OLLAMA_URL;
   }
 
+  // In browser: use relative path so the Vite/Nginx proxy handles it
   return "";
 }
 
@@ -56,11 +57,22 @@ async function ollamaFetch(path: string, init: RequestInit = {}, timeoutMs = 100
     controller.abort();
   }, timeoutMs);
 
+  const base = getOllamaBase();
+  const url = base ? `${base}/api${path}` : `/api${path}`;
+
   try {
-    return await fetch(`${getOllamaBase()}/api${path}`, {
+    const resp = await fetch(url, {
       ...init,
       signal: controller.signal,
     });
+
+    // If the proxy returned HTML instead of JSON, Ollama is not reachable
+    const ct = resp.headers.get("content-type") || "";
+    if (ct.includes("text/html")) {
+      throw new Error("Ollama tidak terhubung (proxy mengembalikan HTML)");
+    }
+
+    return resp;
   } catch (error) {
     if (timedOut) {
       throw new Error("Koneksi ke Ollama timeout");
@@ -130,8 +142,11 @@ export async function streamChat({
 
 export async function checkOllamaStatus(): Promise<boolean> {
   try {
-    const resp = await ollamaFetch("/tags", {}, 3000);
-    return resp.ok;
+    const resp = await ollamaFetch("/tags", {}, 5000);
+    if (!resp.ok) return false;
+    // Validate it's actually JSON from Ollama
+    const data = await resp.json();
+    return Array.isArray(data.models);
   } catch {
     return false;
   }
@@ -140,6 +155,7 @@ export async function checkOllamaStatus(): Promise<boolean> {
 export async function listModels(): Promise<string[]> {
   try {
     const resp = await ollamaFetch("/tags", {}, 5000);
+    if (!resp.ok) return [];
     const data = await resp.json();
     return (data.models || []).map((m: { name: string }) => m.name);
   } catch {
