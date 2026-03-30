@@ -14,6 +14,7 @@
 - 📱 **Responsive** — Berfungsi di desktop dan mobile
 - ⚡ **100% Lokal** — Tidak ada data yang dikirim ke cloud
 - 🐳 **Docker Ready** — Deploy dengan satu perintah
+- 🆔 **ID Aman di HTTP/IP Lokal** — Chat tetap bisa dibuat meski aplikasi diakses lewat IP server biasa
 
 ## 💾 Database Lokal
 
@@ -53,6 +54,7 @@ Baca [deploy.md](deploy.md) untuk panduan lengkap.
 - Alexa AI memakai **reverse proxy `/api`**.
 - Untuk deploy lokal biasa, proxy dijalankan lewat `vite preview`.
 - Untuk Docker, proxy dijalankan lewat **Nginx** di dalam container.
+- Untuk Docker di Linux, Ollama wajib listen di `0.0.0.0:11434`, bukan hanya `127.0.0.1`.
 
 Jadi request seperti ini:
 

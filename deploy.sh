@@ -59,6 +59,22 @@ log_warn() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 log_err() { echo -e "${RED}❌ $1${NC}"; }
 log_info() { echo -e "${CYAN}ℹ️  $1${NC}"; }
 
+is_ollama_running() {
+  curl -sf http://127.0.0.1:11434/api/tags > /dev/null 2>&1
+}
+
+is_ollama_publicly_bound() {
+  ss -ltn 2>/dev/null | grep -Eq '(:11434\s)|(:11434$)' && ss -ltn 2>/dev/null | grep -Eq '0\.0\.0\.0:11434|\[::\]:11434|\*:11434'
+}
+
+start_ollama_server() {
+  OLLAMA_HOST="0.0.0.0" OLLAMA_ORIGINS="*" nohup ollama serve >/tmp/alexa-ai-ollama.log 2>&1 &
+}
+
+stop_ollama_server() {
+  pkill -f "ollama serve" 2>/dev/null || true
+}
+
 # ============ STOP ============
 if [ "$ACTION" = "stop" ]; then
   echo ""
@@ -104,8 +120,13 @@ if [ "$ACTION" = "status" ]; then
   echo ""
 
   # Check Ollama
-  if curl -sf http://localhost:11434/api/tags > /dev/null 2>&1; then
+  if is_ollama_running; then
     log_ok "Ollama: Running"
+    if is_ollama_publicly_bound; then
+      log_ok "Ollama bind: 0.0.0.0 / network-accessible"
+    else
+      log_warn "Ollama bind: hanya localhost (Docker tidak akan bisa akses)"
+    fi
     echo "  Models terinstall:"
     ollama list 2>/dev/null | tail -n +2 | while read -r line; do
       echo "    - $line"
@@ -183,12 +204,19 @@ fi
 # ---- Step 2: Start Ollama with CORS ----
 echo ""
 echo "🚀 Step 2: Starting Ollama..."
-if curl -sf http://localhost:11434/api/tags > /dev/null 2>&1; then
-  log_ok "Ollama sudah berjalan"
+if is_ollama_running; then
+  if [ "$USE_DOCKER" = true ] && ! is_ollama_publicly_bound; then
+    log_warn "Ollama sedang berjalan tapi hanya listen di localhost. Restart agar Docker bisa mengakses..."
+    stop_ollama_server
+    sleep 2
+    start_ollama_server
+  else
+    log_ok "Ollama sudah berjalan"
+  fi
 else
-  OLLAMA_HOST="0.0.0.0" OLLAMA_ORIGINS="*" ollama serve &> /dev/null &
+  start_ollama_server
   sleep 3
-  if curl -sf http://localhost:11434/api/tags > /dev/null 2>&1; then
+  if is_ollama_running; then
     log_ok "Ollama berhasil dijalankan (CORS enabled)"
   else
     log_err "Gagal menjalankan Ollama"
@@ -197,6 +225,12 @@ else
     log_info "Set environment variable: OLLAMA_ORIGINS=*"
     exit 1
   fi
+fi
+
+if [ "$USE_DOCKER" = true ] && ! is_ollama_publicly_bound; then
+  log_err "Ollama belum listen di 0.0.0.0:11434, jadi container tidak bisa melihatnya"
+  log_info "Coba jalankan ulang dengan: pkill -f 'ollama serve' && OLLAMA_HOST=0.0.0.0 OLLAMA_ORIGINS='*' ollama serve"
+  exit 1
 fi
 
 # ---- Step 3: Pull Model ----
@@ -303,6 +337,9 @@ echo "   🌐 http://localhost:$PORT"
 echo "   🤖 Model: $MODEL"
 echo "   💾 Database: $DB_ENGINE ($DB_NAME)"
 echo "   🔌 Ollama Proxy: /api -> http://127.0.0.1:11434"
+if [ "$USE_DOCKER" = true ]; then
+echo "   🐳 Docker butuh Ollama listen di 0.0.0.0:11434"
+fi
 echo "==============================="
 echo ""
 echo "📌 Perintah berguna:"
