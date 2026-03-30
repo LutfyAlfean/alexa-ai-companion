@@ -246,25 +246,43 @@ if [ -z "$MODEL" ]; then
     echo "    (belum ada model terinstall)"
   fi
   echo ""
-  echo "  Model populer:"
-  echo "    1) llama3       - Meta Llama 3 (recommended)"
-  echo "    2) mistral      - Mistral AI"
-  echo "    3) codellama    - Coding specialist"
-  echo "    4) openclaw     - OpenClaw"
-  echo "    5) phi3         - Microsoft Phi-3"
-  echo "    6) gemma2       - Google Gemma 2"
-  echo "    7) qwen2        - Alibaba Qwen 2"
-  echo ""
-  read -p "  Masukkan nama model atau nomor (1-7): " choice
-  case "$choice" in
-    1) MODEL="llama3" ;;
-    2) MODEL="mistral" ;;
-    3) MODEL="codellama" ;;
-    4) MODEL="openclaw" ;;
-    5) MODEL="phi3" ;;
+  echo "  Model populer (pilih sesuai RAM server):"
+    echo ""
+    echo "    --- RAM 2-3 GB ---"
+    echo "    1) tinyllama    - TinyLlama (~1.1 GB RAM) ⭐ untuk server kecil"
+    echo "    2) phi          - Microsoft Phi-2 (~1.7 GB RAM)"
+    echo ""
+    echo "    --- RAM 4-6 GB ---"
+    echo "    3) llama3       - Meta Llama 3 (~4.6 GB RAM)"
+    echo "    4) mistral      - Mistral AI (~4 GB RAM)"
+    echo "    5) codellama    - Coding specialist (~4 GB RAM)"
+    echo ""
+    echo "    --- RAM 6+ GB ---"
+    echo "    6) gemma2       - Google Gemma 2 (~5 GB RAM)"
+    echo "    7) qwen2        - Alibaba Qwen 2 (~4 GB RAM)"
+    echo "    8) openclaw     - OpenClaw"
+    echo ""
+    # Detect available RAM
+    if command -v free &>/dev/null; then
+      TOTAL_RAM_MB=$(free -m | awk '/^Mem:/{print $2}')
+      AVAIL_RAM_MB=$(free -m | awk '/^Mem:/{print $7}')
+      echo -e "    ${CYAN}ℹ️  RAM server: Total ${TOTAL_RAM_MB}MB | Tersedia ${AVAIL_RAM_MB}MB${NC}"
+      if [ "$AVAIL_RAM_MB" -lt 3500 ] 2>/dev/null; then
+        echo -e "    ${YELLOW}⚠️  RAM terbatas! Disarankan pilih tinyllama atau phi${NC}"
+      fi
+      echo ""
+    fi
+    read -p "  Masukkan nama model atau nomor (1-8): " choice
+    case "$choice" in
+    1) MODEL="tinyllama" ;;
+    2) MODEL="phi" ;;
+    3) MODEL="llama3" ;;
+    4) MODEL="mistral" ;;
+    5) MODEL="codellama" ;;
     6) MODEL="gemma2" ;;
     7) MODEL="qwen2" ;;
-    "") MODEL="llama3"; echo "  Default: llama3" ;;
+    8) MODEL="openclaw" ;;
+    "") MODEL="tinyllama"; echo "  Default: tinyllama (cocok untuk RAM terbatas)" ;;
     *) MODEL="$choice" ;;
   esac
   echo ""
