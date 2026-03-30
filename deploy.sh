@@ -22,6 +22,7 @@ while [[ $# -gt 0 ]]; do
     --stop) ACTION="stop"; shift ;;
     --restart) ACTION="restart"; shift ;;
     --status) ACTION="status"; shift ;;
+    --clean) ACTION="clean"; shift ;;
     --help)
       echo "Usage: ./deploy.sh [options]"
       echo ""
@@ -32,15 +33,17 @@ while [[ $# -gt 0 ]]; do
       echo "  --stop           Stop Alexa AI (kills server & optionally Ollama)"
       echo "  --restart        Restart Alexa AI"
       echo "  --status         Show current status"
+      echo "  --clean          Hapus model yang tidak terpakai"
       echo "  --help           Show this help"
       echo ""
       echo "Examples:"
       echo "  ./deploy.sh                      # Start with interactive model selection"
-      echo "  ./deploy.sh --model llama3       # Start with llama3"
+      echo "  ./deploy.sh --model tinyllama    # Start with tinyllama"
       echo "  ./deploy.sh --docker             # Deploy with Docker"
       echo "  ./deploy.sh --stop               # Stop everything"
       echo "  ./deploy.sh --stop --docker      # Stop Docker container"
       echo "  ./deploy.sh --status             # Check status"
+      echo "  ./deploy.sh --clean              # Hapus model tidak terpakai"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;
