@@ -162,7 +162,11 @@ const Index = () => {
       if (err instanceof Error && err.name === "AbortError") return;
 
       const errorMsg = err instanceof Error ? err.message : "Gagal menghubungi Ollama";
-      const errorContent = `⚠️ **Error**: ${errorMsg}\n\nPastikan Ollama aktif, model \`${selectedModel}\` sudah terinstall, dan web proxy mengarah ke \`${getOllamaUrl()}\`.`;
+      const isMemoryError = errorMsg.includes("more system memory") || errorMsg.includes("not enough memory");
+      const memoryHint = isMemoryError
+        ? `\n\n💡 **Solusi**: Model \`${selectedModel}\` terlalu besar untuk RAM server. Ganti ke model yang lebih kecil:\n- \`tinyllama\` (~1.1 GB RAM)\n- \`phi\` (~1.7 GB RAM)\n\nJalankan: \`ollama pull tinyllama\` lalu pilih dari dropdown di header.`
+        : `\n\nPastikan Ollama aktif, model \`${selectedModel}\` sudah terinstall, dan web proxy mengarah ke \`${getOllamaUrl()}\`.`;
+      const errorContent = `⚠️ **Error**: ${errorMsg}${memoryHint}`;
 
       if (assistantMsg) {
         setMessages(prev =>
