@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Menu, X, Sparkles, ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { chatDB, CHAT_DB_ENGINE, CHAT_DB_NAME, type Conversation, type StoredMessage } from "@/lib/chatdb";
 import { streamChat, checkOllamaStatus, getOllamaUrl, listModels, type ChatMessage as OllamaMsg } from "@/lib/ollama";
 import logoImg from "/logo.png";
@@ -19,12 +21,17 @@ const Index = () => {
   const [messages, setMessages] = useState<StoredMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [ollamaOnline, setOllamaOnline] = useState<boolean | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem("alexa-model") || "llama3");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const stopStreaming = useCallback(() => {
     abortRef.current?.abort();
@@ -73,12 +80,16 @@ const Index = () => {
     stopStreaming();
     setActiveConvId(null);
     setMessages([]);
-  }, [stopStreaming]);
+    setModelMenuOpen(false);
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile, stopStreaming]);
 
   const handleSelectConv = useCallback((id: string) => {
     stopStreaming();
     setActiveConvId(id);
-  }, [stopStreaming]);
+    setModelMenuOpen(false);
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile, stopStreaming]);
 
   const handleDeleteConv = useCallback(async (id: string) => {
     if (activeConvId === id) {
@@ -158,8 +169,11 @@ const Index = () => {
           prev.map(m => m.id === assistantMsg?.id ? { ...m, content: errorContent } : m)
         );
         await chatDB.updateMessage(assistantMsg.id, errorContent);
+      } else {
+        toast.error(errorMsg);
       }
 
+      console.error("Alexa AI send error:", err);
       abortRef.current = null;
       setIsStreaming(false);
     }
@@ -188,7 +202,7 @@ const Index = () => {
       </div>
 
       {/* Overlay for mobile */}
-      {sidebarOpen && (
+      {sidebarOpen && isMobile && (
         <div className="lg:hidden fixed inset-0 z-30 bg-background/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
       )}
 

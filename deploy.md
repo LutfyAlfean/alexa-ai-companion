@@ -211,12 +211,30 @@ location.reload();
 3. Pastikan firewall membuka port `11434`
 4. Jika deploy manual, jalankan web dengan `vite preview`, bukan static server biasa tanpa proxy
 5. Jika deploy Docker, pastikan container bisa mengakses `host.docker.internal:11434`
+6. Jika chat tidak bisa terkirim saat akses lewat IP server biasa, update terbaru sudah memperbaiki generator ID agar tidak bergantung pada `crypto.randomUUID()` saja
 
 ### Tidak bisa kirim pesan
 - Pastikan status "Online" di header
 - Pastikan model sudah dipilih dan ada di Ollama: `ollama list`
 - Jika input terasa terkunci, tekan **Chat Baru** atau tunggu request timeout selesai
 - Versi terbaru sudah mengizinkan tetap mengetik saat request ke Ollama sedang berlangsung
+- Jika sebelumnya klik kirim tidak bereaksi sama sekali saat akses via IP/HTTP, penyebabnya biasanya ID chat gagal dibuat; ini sudah diperbaiki di versi terbaru
+
+### Docker status masih offline
+- Jalankan `./deploy.sh --status` dan cek bagian **Ollama bind**
+- Jika tertulis **hanya localhost**, Docker tidak bisa menjangkau Ollama
+- Perbaiki dengan:
+
+```bash
+pkill -f 'ollama serve'
+OLLAMA_HOST=0.0.0.0 OLLAMA_ORIGINS='*' ollama serve
+```
+
+- Setelah itu jalankan lagi:
+
+```bash
+./deploy.sh --docker
+```
 
 ### Model tidak ditemukan
 - Download model: `ollama pull llama3`
